@@ -1,0 +1,118 @@
+
+
+
+<html>
+	<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<!-- CSS only -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+	</head>
+	<body>
+	
+	<div class="jumbotron p-3 m-5">
+	  <h1 class="display-4">JSON Compare</h1>
+	  <p class="lead">Select 2 files to compare</p>
+	</div>
+	
+	<div class="container">	
+		<div class="row">
+			<div class="col-6">
+				<div class="mb-3">
+				  <label for="firstFileSelect" class="form-label">Select First file</label>
+				  <input class="form-control" type="file" id="firstFileSelect">
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="mb-3">
+				  <label for="secondFileSelect" class="form-label">Select Second file</label>
+				  <input class="form-control" type="file" id="secondFileSelect">
+				</div>
+			</div>
+			<div class="col-12 text-center p-5">
+				<button type="button" class="btn btn-outline-primary" onclick="compareFiles()">Compare</button>
+			</div>
+			<div class="col-6">
+				<h6>Missing in First file</h6>
+				<ul class="list-group p-3" id="ResultFirstFile"></ul>
+			</div>
+			<div class="col-6">
+				<h6>Missing in Second file</h6>
+				<ul class="list-group p-3" id="ResultSecondFile"></ul>
+			</div>
+		</div>
+	</div>
+	
+	<script>
+	let missingInFirstFile = [];
+	let missingInSecondFile = [];
+	let fileA, fileB;
+	const firstFileSelectEl = document.getElementById('firstFileSelect');
+	const secondFileSelectEl = document.getElementById('secondFileSelect');
+	
+	firstFileSelectEl.onchange = event => {
+		fileA = null;
+		clearResult();
+		let reader = new FileReader();
+        reader.onload = event => {
+			fileA = JSON.parse(event.target.result);
+		};
+        reader.readAsText(event.target.files[0]);
+	}
+	
+	secondFileSelectEl.onchange = event => {
+		fileB = null;
+		clearResult();
+		let reader = new FileReader();
+        reader.onload = event => {
+			fileB = JSON.parse(event.target.result);
+		};
+        reader.readAsText(event.target.files[0]);
+	}
+	
+	function removeAllOptions(listToRemove) {
+		let child = listToRemove.lastElementChild; 
+        while (child) {
+			listToRemove.removeChild(child);
+			child = listToRemove.lastElementChild;
+		}
+	}
+	
+	function clearResult() {
+		removeAllOptions(document.getElementById("ResultFirstFile"));
+		removeAllOptions(document.getElementById("ResultSecondFile"));
+	}
+
+	function compareFiles() {
+		if (!firstFileSelectEl.value || !secondFileSelectEl.value || !fileA || !fileB) { return }	
+		missingInFirstFile = [];
+		missingInSecondFile = [];
+		comp(fileA, fileB, missingInSecondFile);
+		comp(fileB, fileA, missingInFirstFile);	
+		AddFilesToResultList(missingInFirstFile, document.getElementById("ResultFirstFile"));
+		AddFilesToResultList(missingInSecondFile, document.getElementById("ResultSecondFile"));
+	}
+	
+	function AddFilesToResultList(resultList, ListEl) {
+		removeAllOptions(ListEl);
+		console.log(ListEl.childElementCount, resultList.length);
+		resultList.forEach(r=>{
+		  let li = document.createElement("li");
+		  li.setAttribute("class", "list-group-item");
+		  li.innerText = r;
+		  ListEl.appendChild(li);
+		});
+	}
+
+	function comp(first, second, list) {
+	  Object.keys(first).forEach(ak => {
+		if (!second || !(ak in second)) {
+		  list.push(ak);
+		}
+		if (typeof first[ak] === "object" ) {
+		  comp(first && first[ak], second && second[ak], list)
+		}
+	  });
+	}
+	</script>
+	</body>
+</html>
